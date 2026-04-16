@@ -90,7 +90,10 @@ app.post("/api/export-pdf", async (req, res) => {
     }
     
     const page = await browser.newPage();
-    await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
+    await page.setContent(fullHtml, { 
+      waitUntil: 'networkidle2',
+      timeout: 120000 
+    });
     
     const pdfBuffer = await page.pdf({
       format: 'A4',
