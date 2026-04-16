@@ -113,7 +113,9 @@ app.post("/api/export-pdf", async (req, res) => {
 });
 
 async function setupApp() {
-  if (process.env.NODE_ENV !== "production") {
+  const isProduction = process.env.NODE_ENV === "production" || process.env.RENDER === "true";
+  
+  if (!isProduction) {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
