@@ -74,6 +74,7 @@ app.post("/api/export-pdf", async (req, res) => {
 
     let browser;
     if (process.env.VERCEL) {
+      console.log('Using @sparticuz/chromium for Vercel');
       browser = await puppeteerCore.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
@@ -81,8 +82,9 @@ app.post("/api/export-pdf", async (req, res) => {
         headless: chromium.headless,
       });
     } else {
+      console.log('Using regular puppeteer for non-vercel environment');
       browser = await puppeteer.launch({
-        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
         headless: true
       });
     }
@@ -100,9 +102,13 @@ app.post("/api/export-pdf", async (req, res) => {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename=export.pdf');
     res.send(Buffer.from(pdfBuffer));
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error generating PDF:', error);
-    res.status(500).json({ error: 'Failed to generate PDF' });
+    res.status(500).json({ 
+      error: 'Failed to generate PDF', 
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined
+    });
   }
 });
 
@@ -121,10 +127,10 @@ async function setupApp() {
     });
   }
 
-  const PORT = 3000;
+  const PORT = process.env.PORT || 3000;
   if (!process.env.VERCEL) {
-    app.listen(PORT, "0.0.0.0", () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+    app.listen(Number(PORT), "0.0.0.0", () => {
+      console.log(`Server running on port ${PORT}`);
     });
   }
 }
